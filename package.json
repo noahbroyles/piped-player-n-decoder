@@ -1,0 +1,17 @@
+{
+    "name": "piped-player-n-decoder",
+    "version": "1.0.0",
+    "description": "Deciphers YouTube streaming URLs for Piped, so the backend can hand out SABR URLs",
+    "type": "module",
+    "main": "src/server.mjs",
+    "scripts": {
+        "start": "node src/server.mjs",
+        "test": "node --test"
+    },
+    "engines": {
+        "node": ">=22"
+    },
+    "dependencies": {
+        "youtubei.js": "18.1.0"
+    }
+}
