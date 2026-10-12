@@ -32,7 +32,7 @@ Then set `PLAYER_N_DECODER_URL:http://piped-player-n-decoder:3001` in the backen
 
 ## Security
 
-Deciphering means running JavaScript that YouTube serves. The service runs it in an empty `node:vm` context (no `require`, `process` or network access) with a 5 second time limit, and the image runs as an unprivileged user. `node:vm` is not a complete sandbox, so keep the container on its own with no secrets or volumes, as Piped-Docker does.
+Deciphering means running JavaScript that YouTube serves. The service runs it in an empty `node:vm` context (no `require`, `process` or network access) with a 5 second time limit. The image is based on [distroless](https://github.com/GoogleContainerTools/distroless) Node.js, which has no shell or package manager, and runs as an unprivileged user. `node:vm` is not a complete sandbox, so keep the container on its own with no secrets or volumes, as Piped-Docker does.
 
 ## License
 
