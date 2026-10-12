@@ -2,6 +2,7 @@
     "name": "piped-player-n-decoder",
     "version": "1.0.0",
     "description": "Deciphers YouTube streaming URLs for Piped, so the backend can hand out SABR URLs",
+    "license": "AGPL-3.0-only",
     "type": "module",
     "main": "src/server.mjs",
     "scripts": {
