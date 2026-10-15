@@ -28,6 +28,14 @@ const MAX_BODY_BYTES = 64 * 1024;
 // Only YouTube's own streaming hosts are worth deciphering
 const ALLOWED_HOST = /(^|\.)(googlevideo\.com|youtube\.com)$/;
 
+// youtubei.js pastes n into the source of the script it runs, so it must never contain anything
+// that could close the string literal. Real values are short base64url strings.
+const VALID_N = /^[A-Za-z0-9_-]{1,128}$/;
+
+function isAllowedUrl(url) {
+    return url.protocol === 'https:' && ALLOWED_HOST.test(url.hostname);
+}
+
 // youtubei.js leaves running the player script to us. It is code from YouTube, so it runs
 // in an empty context: no require, no process, no fetch, nothing from this process.
 // (node:vm is not a hard security boundary, but it keeps the script away from Node's APIs;
@@ -75,14 +83,36 @@ async function currentSts() {
 }
 
 async function decipher(url, sts) {
-    const parsed = new URL(url);
-    if (parsed.protocol !== 'https:' || !ALLOWED_HOST.test(parsed.hostname)) {
+    let parsed;
+    try {
+        parsed = new URL(url);
+    } catch {
+        throw new HttpError(400, 'Invalid URL');
+    }
+    if (!isAllowedUrl(parsed)) {
         throw new HttpError(400, 'Not a YouTube streaming URL');
+    }
+
+    // youtubei.js would decipher a nested url= parameter instead of the URL itself, skipping the
+    // host check above. Streaming URLs never have one.
+    if (parsed.searchParams.has('url')) {
+        throw new HttpError(400, 'Nested URLs are not accepted');
+    }
+
+    const n = parsed.searchParams.get('n');
+    if (n !== null && !VALID_N.test(n)) {
+        throw new HttpError(400, 'Invalid n parameter');
     }
 
     // Use the player the URL was requested with, if we still have it
     const yt = players.get(Number(sts)) || players.get(await currentSts());
-    return yt.session.player.decipher(url);
+    const deciphered = yt.session.player.decipher(url);
+
+    // Belt and braces: never hand back a URL for a host we wouldn't have accepted
+    if (!isAllowedUrl(new URL(await deciphered))) {
+        throw new HttpError(500, 'Deciphering produced an unexpected URL');
+    }
+    return deciphered;
 }
 
 class HttpError extends Error {
